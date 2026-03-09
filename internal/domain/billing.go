@@ -28,6 +28,7 @@ type Invoice struct {
 	Amount         int64      `json:"amount"`
 	Currency       string     `json:"currency"`
 	Status         string     `json:"status"`
+	PaymentMethod  string     `json:"payment_method,omitempty"`
 	IssuedAt       time.Time  `json:"issued_at"`
 	PaidAt         *time.Time `json:"paid_at,omitempty"`
 }
@@ -48,4 +49,9 @@ type RecordUsageRequest struct {
 // GenerateInvoiceRequest is the payload for generating an invoice.
 type GenerateInvoiceRequest struct {
 	SubscriptionID string `json:"subscription_id"`
+}
+
+// PayInvoiceRequest is the payload for paying an invoice via HelixPay.
+type PayInvoiceRequest struct {
+	Token string `json:"token"`
 }
