@@ -2,18 +2,18 @@
 
 ## Configuration
 
-- [~] Extend `config/config.go` to read `HELIXPAY_API_KEY`, `HELIXPAY_MERCHANT_ID`, `HELIXPAY_WEBHOOK_SECRET`, and `HELIXPAY_ENV` from environment variables
-- [~] Fail fast at startup (log fatal) if `HELIXPAY_API_KEY` or `HELIXPAY_MERCHANT_ID` are empty
+- [x] Extend `config/config.go` to read `HELIXPAY_API_KEY`, `HELIXPAY_MERCHANT_ID`, `HELIXPAY_WEBHOOK_SECRET`, and `HELIXPAY_ENV` from environment variables
+- [x] Fail fast at startup (log fatal) if `HELIXPAY_API_KEY` or `HELIXPAY_MERCHANT_ID` are empty
 
 ## Domain & Store
 
-- [~] Add `HelixPayChargeID string` and `PaymentMethod string` fields to `domain.Invoice` in `internal/domain/billing.go`
-- [~] Add `FindInvoiceByChargeID(chargeID string) (*domain.Invoice, bool)` method to `internal/store/billing.go`
+- [x] Add `HelixPayChargeID string` and `PaymentMethod string` fields to `domain.Invoice` in `internal/domain/billing.go`
+- [x] Add `FindInvoiceByChargeID(chargeID string) (*domain.Invoice, bool)` method to `internal/store/billing.go`
 
 ## HelixPay Client
 
-- [ ] Add `github.com/helix-acme-corp-demo/helix-pay-go` to `go.mod` / `go.sum`
-- [ ] Initialise `helixpay.Client` in `cmd/server/main.go` using `helixpay.Dial` with `WithEnvironment`, `WithMerchantID`, and `WithWebhookSecret` options drawn from config
+- [~] Add `github.com/helix-acme-corp-demo/helix-pay-go` to `go.mod` / `go.sum`
+- [~] Initialise `helixpay.Client` in `cmd/server/main.go` using `helixpay.Dial` with `WithEnvironment`, `WithMerchantID`, and `WithWebhookSecret` options drawn from config
 
 ## Payment Handler (`internal/handler/payment.go`)
 
