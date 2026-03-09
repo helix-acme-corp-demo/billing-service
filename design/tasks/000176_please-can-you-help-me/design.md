@@ -89,3 +89,34 @@ Client → POST /invoices/{id}/pay {token}
 - Structured logging via `logpipe.String(...)` fields — log payment outcome (success/failure) without logging the API key or token
 - Handler constructors follow `NewXxx(store, logger)` convention — `NewPayment(store, client, logger)`
 - Routes registered in `cmd/server/main.go` next to related invoice routes
+
+## Implementation Notes
+
+### What Was Built
+- `config/config.go` — Added `HelixPayBaseURL` and `HelixPayAPIKey` fields; also made `PORT` env-configurable (was hardcoded). Defaults to `https://api.helixpay.io` if `HELIXPAY_BASE_URL` is unset.
+- `internal/domain/billing.go` — Added `PaymentMethod string` (omitempty) to `Invoice`; added `PayInvoiceRequest{Token string}`.
+- `internal/payment/helixpay.go` — New package. `Client` wraps `net/http` with a 10s timeout. `Charge()` POSTs to `{baseURL}/v1/charge` with `Authorization: Bearer <key>`. Uses `retryx.Do` with `WithRetryIf` to skip retry on `*PaymentError` (4xx), retries on network errors and 5xx. Max 4 attempts, 200ms base delay, 5s max delay.
+- `internal/handler/payment.go` — `PaymentHandler.Pay()` handles the full lifecycle: parse token → find invoice → guard already-paid → call Charge → update invoice → save → respond. Added a local `paymentRequired()` helper to write 402 responses in the envelope shape (the `envelope` package has no `PaymentRequired` helper).
+- `cmd/server/main.go` — Constructs `payment.NewClient(cfg.HelixPayBaseURL, cfg.HelixPayAPIKey)`, constructs `handler.NewPayment(...)`, registers `r.Post("/invoices/{id}/pay", paymentHandler.Pay())`.
+
+### retryx API (learned during implementation)
+The `retryx` package exposes a simple `retryx.Do(ctx, fn, ...opts)` top-level function. Key options:
+- `retryx.WithMaxAttempts(n)` — total attempts including first call
+- `retryx.WithBaseDelay(d)` / `retryx.WithMaxDelay(d)` — backoff tuning
+- `retryx.WithRetryIf(func(error) bool)` — predicate to skip retry on permanent errors
+
+There is no `Policy` or `strategy` sub-package in this version of the library; the cookbook example was illustrative only.
+
+### envelope package (learned during implementation)
+The `envelope` package does **not** have a `PaymentRequired` (402) helper. Added a local `paymentRequired()` helper in `handler/payment.go` that manually encodes an `envelope.Response` at HTTP 402.
+
+### Gotchas
+- `envelope.Write` sets both `Content-Type` and calls `w.WriteHeader` internally — do not call `w.WriteHeader` before it or the header will be sent twice (only the first call takes effect in Go's `http.ResponseWriter`). The local `paymentRequired()` helper correctly calls `w.WriteHeader(402)` before encoding directly, bypassing `envelope.Write`.
+- The `retryx` module files in the Go module cache are read-only (`chmod 444`); use `sudo cat` to inspect them.
+
+### Smoke Test Results
+All edge cases verified against a running local server:
+- `POST /invoices/{id}/pay` with valid token → 500 (HelixPay host not reachable in sandbox; retried 4× as expected)
+- Missing `token` field → 400 `missing_fields`
+- Unknown invoice ID → 404 `not_found`
+- All pre-existing endpoints (subscriptions, usage, invoices) unaffected
