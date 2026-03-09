@@ -22,14 +22,17 @@ type UsageRecord struct {
 }
 
 // Invoice represents a billing invoice for a subscription.
+// Status values: "draft", "pending_payment", "paid"
 type Invoice struct {
-	ID             string     `json:"id"`
-	SubscriptionID string     `json:"subscription_id"`
-	Amount         int64      `json:"amount"`
-	Currency       string     `json:"currency"`
-	Status         string     `json:"status"`
-	IssuedAt       time.Time  `json:"issued_at"`
-	PaidAt         *time.Time `json:"paid_at,omitempty"`
+	ID               string     `json:"id"`
+	SubscriptionID   string     `json:"subscription_id"`
+	Amount           int64      `json:"amount"`
+	Currency         string     `json:"currency"`
+	Status           string     `json:"status"`
+	IssuedAt         time.Time  `json:"issued_at"`
+	PaidAt           *time.Time `json:"paid_at,omitempty"`
+	HelixPayChargeID string     `json:"helix_pay_charge_id,omitempty"`
+	PaymentMethod    string     `json:"payment_method,omitempty"`
 }
 
 // CreateSubscriptionRequest is the payload for creating a subscription.
@@ -48,4 +51,13 @@ type RecordUsageRequest struct {
 // GenerateInvoiceRequest is the payload for generating an invoice.
 type GenerateInvoiceRequest struct {
 	SubscriptionID string `json:"subscription_id"`
+}
+
+// PayInvoiceRequest is the payload for paying an invoice via HelixPay.
+// Either CustomerID must be set, or both Email and Name must be set
+// (in which case a new HelixPay customer will be registered).
+type PayInvoiceRequest struct {
+	CustomerID string `json:"customer_id"`
+	Email      string `json:"email"`
+	Name       string `json:"name"`
 }
