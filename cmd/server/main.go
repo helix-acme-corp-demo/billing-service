@@ -14,6 +14,7 @@ import (
 
 	"github.com/helix-acme-corp-demo/billing-service/config"
 	"github.com/helix-acme-corp-demo/billing-service/internal/handler"
+	"github.com/helix-acme-corp-demo/billing-service/internal/payment"
 	"github.com/helix-acme-corp-demo/billing-service/internal/store"
 )
 
@@ -30,6 +31,9 @@ func main() {
 	subHandler := handler.NewSubscription(billingStore, cache, logger)
 	usageHandler := handler.NewUsage(billingStore, logger)
 	invoiceHandler := handler.NewInvoice(billingStore, logger)
+
+	helixPayClient := payment.NewClient(cfg.HelixPayBaseURL, cfg.HelixPayAPIKey)
+	paymentHandler := handler.NewPayment(billingStore, helixPayClient, logger)
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -49,6 +53,7 @@ func main() {
 	r.Post("/invoices/generate", invoiceHandler.Generate())
 	r.Get("/invoices/{id}", invoiceHandler.Get())
 	r.Get("/invoices", invoiceHandler.List())
+	r.Post("/invoices/{id}/pay", paymentHandler.Pay())
 
 	logger.Info("starting billing-service", logpipe.String("port", cfg.Port))
 	http.ListenAndServe(fmt.Sprintf(":%s", cfg.Port), r)
