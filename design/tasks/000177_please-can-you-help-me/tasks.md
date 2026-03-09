@@ -2,13 +2,13 @@
 
 ## Configuration
 
-- [ ] Extend `config/config.go` to read `HELIXPAY_API_KEY`, `HELIXPAY_MERCHANT_ID`, `HELIXPAY_WEBHOOK_SECRET`, and `HELIXPAY_ENV` from environment variables
-- [ ] Fail fast at startup (log fatal) if `HELIXPAY_API_KEY` or `HELIXPAY_MERCHANT_ID` are empty
+- [~] Extend `config/config.go` to read `HELIXPAY_API_KEY`, `HELIXPAY_MERCHANT_ID`, `HELIXPAY_WEBHOOK_SECRET`, and `HELIXPAY_ENV` from environment variables
+- [~] Fail fast at startup (log fatal) if `HELIXPAY_API_KEY` or `HELIXPAY_MERCHANT_ID` are empty
 
 ## Domain & Store
 
-- [ ] Add `HelixPayChargeID string` and `PaymentMethod string` fields to `domain.Invoice` in `internal/domain/billing.go`
-- [ ] Add `FindInvoiceByChargeID(chargeID string) (*domain.Invoice, bool)` method to `internal/store/billing.go`
+- [~] Add `HelixPayChargeID string` and `PaymentMethod string` fields to `domain.Invoice` in `internal/domain/billing.go`
+- [~] Add `FindInvoiceByChargeID(chargeID string) (*domain.Invoice, bool)` method to `internal/store/billing.go`
 
 ## HelixPay Client
 
