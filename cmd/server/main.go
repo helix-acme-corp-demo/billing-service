@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -12,6 +13,8 @@ import (
 	"github.com/helix-acme-corp-demo/logpipe"
 	_ "github.com/helix-acme-corp-demo/retryx"
 
+	helixpay "github.com/helix-acme-corp-demo/helix-pay-go"
+
 	"github.com/helix-acme-corp-demo/billing-service/config"
 	"github.com/helix-acme-corp-demo/billing-service/internal/handler"
 	"github.com/helix-acme-corp-demo/billing-service/internal/store"
@@ -20,6 +23,31 @@ import (
 func main() {
 	cfg := config.Load()
 	logger := logpipe.New()
+
+	// Fail fast if required HelixPay credentials are missing.
+	if cfg.HelixPayAPIKey == "" {
+		log.Fatal("HELIXPAY_API_KEY is required but not set")
+	}
+	if cfg.HelixPayMerchantID == "" {
+		log.Fatal("HELIXPAY_MERCHANT_ID is required but not set")
+	}
+
+	// Resolve the HelixPay environment.
+	hpEnv := helixpay.Sandbox
+	if cfg.HelixPayEnv == "production" {
+		hpEnv = helixpay.Production
+	}
+
+	// Initialise the HelixPay client.
+	helixClient, err := helixpay.Dial(
+		cfg.HelixPayAPIKey,
+		helixpay.WithEnvironment(hpEnv),
+		helixpay.WithMerchantID(cfg.HelixPayMerchantID),
+		helixpay.WithWebhookSecret(cfg.HelixPayWebhookSecret),
+	)
+	if err != nil {
+		log.Fatalf("failed to initialise HelixPay client: %v", err)
+	}
 
 	cache := cachex.Memory(
 		cachex.WithDefaultTTL(5*time.Minute),
@@ -30,6 +58,8 @@ func main() {
 	subHandler := handler.NewSubscription(billingStore, cache, logger)
 	usageHandler := handler.NewUsage(billingStore, logger)
 	invoiceHandler := handler.NewInvoice(billingStore, logger)
+	paymentHandler := handler.NewPayment(billingStore, helixClient, logger)
+	webhookHandler := handler.NewHelixPayWebhookHandler(billingStore, helixClient, logger)
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -49,6 +79,9 @@ func main() {
 	r.Post("/invoices/generate", invoiceHandler.Generate())
 	r.Get("/invoices/{id}", invoiceHandler.Get())
 	r.Get("/invoices", invoiceHandler.List())
+	r.Post("/invoices/{id}/pay", paymentHandler.Pay())
+
+	r.Mount("/webhooks/helixpay", webhookHandler)
 
 	logger.Info("starting billing-service", logpipe.String("port", cfg.Port))
 	http.ListenAndServe(fmt.Sprintf(":%s", cfg.Port), r)

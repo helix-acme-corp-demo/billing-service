@@ -97,6 +97,20 @@ func (s *Store) FindInvoice(id string) (*domain.Invoice, bool) {
 	return inv, ok
 }
 
+// FindInvoiceByChargeID returns the invoice associated with a given HelixPay
+// charge ID. Used by the webhook handler to look up the invoice when a charge
+// lifecycle event arrives.
+func (s *Store) FindInvoiceByChargeID(chargeID string) (*domain.Invoice, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	for _, inv := range s.invoices {
+		if inv.HelixPayChargeID == chargeID {
+			return inv, true
+		}
+	}
+	return nil, false
+}
+
 // InvoicesBySubscription returns all invoices for a subscription.
 func (s *Store) InvoicesBySubscription(subID string) []*domain.Invoice {
 	s.mu.RLock()

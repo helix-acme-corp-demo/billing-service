@@ -4,6 +4,8 @@ github.com/helix-acme-corp-demo/cachex v0.0.0-20260303102801-e6166ef0cfd6 h1:tWk
 github.com/helix-acme-corp-demo/cachex v0.0.0-20260303102801-e6166ef0cfd6/go.mod h1:9IjhlQ/bOWLXmixwgqldW30XTMJnQv2EBqjCufUXXKU=
 github.com/helix-acme-corp-demo/envelope v0.0.0-20260303102813-b2a1edadc29e h1:J4g1qNkKINFD1T2fh6T1J06tYb6IMz9X4ZHMDn/lFb0=
 github.com/helix-acme-corp-demo/envelope v0.0.0-20260303102813-b2a1edadc29e/go.mod h1:69Te+lJH/CnfTNeCm8h/9FdjTqJd3/BKqdYH56+soJc=
+github.com/helix-acme-corp-demo/helix-pay-go v0.0.0-20260309164146-faa66716ff4d h1:ha0hV+IXeseO7mg0gP5b2/UlwrMkqi92z7RxTaq+EoM=
+github.com/helix-acme-corp-demo/helix-pay-go v0.0.0-20260309164146-faa66716ff4d/go.mod h1:DW8xsToGhQ31iFjNGD/Z9EbPqghogs1x0ah0dXBMDqU=
 github.com/helix-acme-corp-demo/logpipe v0.0.0-20260303102634-bf736eb00a8a h1:DTsGasES4YzLBKQtcALl+3zee1HNX2i5QJTUjj3UOh8=
 github.com/helix-acme-corp-demo/logpipe v0.0.0-20260303102634-bf736eb00a8a/go.mod h1:sdD2eR9m9J9KPqtqV+w9mqY/+nHR7bDNjlAqEUUHTQc=
 github.com/helix-acme-corp-demo/retryx v0.0.0-20260303102600-1510bb48a448 h1:L6Ipftzzf1opiS55alLpjUFLdO254nieFKVLHg5z+kc=
