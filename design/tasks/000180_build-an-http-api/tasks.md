@@ -62,8 +62,8 @@
 - [x] Apply `r.With(middleware.RequireScope(...))` to each billing route per the scope table in `requirements.md`
 
 ## Tests
-- [~] Unit test `Authenticate` middleware: missing header, invalid signature, expired token, revoked token, valid token
-- [~] Unit test `RequireScope` middleware: missing scope returns 403, matching scope passes through
-- [~] Unit test `AuthHandler.Refresh`: valid refresh, expired refresh, revoked refresh, wrong token type
-- [~] Unit test `AuthHandler.Revoke`: valid token revoked, invalid token rejected
-- [~] Unit test `store.IsRevoked`: not revoked, revoked, lazy pruning of expired entries
+- [x] Unit test `Authenticate` middleware: missing header, invalid signature, expired token, revoked token, valid token
+- [x] Unit test `RequireScope` middleware: missing scope returns 403, matching scope passes through
+- [x] Unit test `AuthHandler.Refresh`: valid refresh, expired refresh, revoked refresh, wrong token type
+- [x] Unit test `AuthHandler.Revoke`: valid token revoked, invalid token rejected
+- [x] Unit test `store.IsRevoked`: not revoked, revoked, lazy pruning of expired entries

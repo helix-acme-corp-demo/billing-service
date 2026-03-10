@@ -148,3 +148,31 @@ No changes to the `envelope` package are needed. The Envelope Helpers tasks in t
 - **In-memory store**: `store.Store` uses `sync.RWMutex` protecting all maps. The new `revokedJTIs` map must follow the same locking discipline as the existing maps.
 - **Config**: flat struct loaded once at startup from environment; no configuration library needed.
 - **No database**: the service is entirely in-memory, consistent with the existing store.
+
+## Implementation Notes
+
+- **Branch**: `feature/000180-build-an-http-api` off `main`
+- **New files created**:
+  - `internal/middleware/auth.go` — `Authenticate`, `RequireScope`, `SignToken`, `ParseToken`, `ClaimsFromContext`
+  - `internal/handler/auth.go` — `AuthHandler` with `Refresh()` and `Revoke()` handlers
+  - `internal/middleware/auth_test.go` — 9 tests covering all middleware cases
+  - `internal/handler/auth_test.go` — 11 tests covering refresh and revoke flows
+  - `internal/store/revocation_test.go` — 5 tests covering revocation list and lazy pruning
+- **Modified files**:
+  - `config/config.go` — added `JWTSecret`, `AccessTokenTTL`, `RefreshTokenTTL`; `log.Fatal` on missing `JWT_SECRET`
+  - `internal/domain/billing.go` — added `TokenClaims`, `RefreshRequest`, `RevokeRequest`, `TokenPair`
+  - `internal/store/billing.go` — added `revokedJTIs` map, `RevokeToken`, `IsRevoked` methods
+  - `cmd/server/main.go` — aliased `chi/v5/middleware` as `chimiddleware` to avoid collision; wired auth handler and protected route group
+  - `go.mod` / `go.sum` — added `github.com/golang-jwt/jwt/v5 v5.3.1`
+
+- **Envelope discovery**: `envelope.Unauthorized` and `envelope.Forbidden` already exist but only accept a `message string` — no `code` parameter. Rather than modifying the external package, the middleware and auth handler construct `envelope.Response` values directly using the exported `envelope.Response` and `envelope.ErrorDetail` structs. No changes to the envelope package were needed.
+
+- **SignToken/ParseToken exported**: Originally designed as private helpers, they were promoted to exported (`SignToken`, `ParseToken`) so that `internal/handler/auth.go` could reuse them without duplicating logic. The `Authenticate` middleware now calls `ParseToken` internally.
+
+- **`revocationStore` interface**: The middleware uses a narrow `revocationStore` interface (`IsRevoked(string) bool`) rather than importing `*store.Store` directly. This keeps the middleware package free of a circular import and makes it easy to test with a `fakeStore`.
+
+- **`authStore` interface**: Similarly, `AuthHandler` uses an `authStore` interface (`RevokeToken`, `IsRevoked`) rather than depending on `*store.Store` directly, enabling independent unit testing with `fakeAuthStore`.
+
+- **`IsRevoked` uses write lock for pruning**: The lazy-prune path inside `IsRevoked` calls `delete(s.revokedJTIs, jti)`, which requires a write lock. The method therefore acquires `s.mu.Lock()` (not `RLock()`) to handle both the read and the conditional delete safely.
+
+- **All 23 tests pass**, `go vet` reports no issues.
