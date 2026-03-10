@@ -1,13 +1,13 @@
 # Implementation Tasks
 
 ## Dependencies
-- [ ] Add `github.com/golang-jwt/jwt/v5` to `go.mod` and run `go mod tidy` to update `go.sum`
+- [~] Add `github.com/golang-jwt/jwt/v5` to `go.mod` and run `go mod tidy` to update `go.sum`
 
 ## Config
-- [ ] Add `JWTSecret string`, `AccessTokenTTL time.Duration`, and `RefreshTokenTTL time.Duration` fields to `config.Config`
-- [ ] Load `JWTSecret` from `JWT_SECRET` env var; call `log.Fatal` at startup if empty
-- [ ] Load `AccessTokenTTL` from `ACCESS_TOKEN_TTL` env var (default: 15 minutes)
-- [ ] Load `RefreshTokenTTL` from `REFRESH_TOKEN_TTL` env var (default: 7 days)
+- [~] Add `JWTSecret string`, `AccessTokenTTL time.Duration`, and `RefreshTokenTTL time.Duration` fields to `config.Config`
+- [~] Load `JWTSecret` from `JWT_SECRET` env var; call `log.Fatal` at startup if empty
+- [~] Load `AccessTokenTTL` from `ACCESS_TOKEN_TTL` env var (default: 15 minutes)
+- [~] Load `RefreshTokenTTL` from `REFRESH_TOKEN_TTL` env var (default: 7 days)
 
 ## Domain Types
 - [ ] Add `TokenClaims` struct to `internal/domain/billing.go` — embeds `jwt.RegisteredClaims`, adds `Scopes []string` and `Type string`
