@@ -9,3 +9,5 @@ require (
 	github.com/helix-acme-corp-demo/logpipe v0.0.0-20260303102634-bf736eb00a8a
 	github.com/helix-acme-corp-demo/retryx v0.0.0-20260303102600-1510bb48a448
 )
+
+require github.com/helix-acme-corp-demo/authtokens v0.0.0-20260310093228-0c247af2286c // indirect
