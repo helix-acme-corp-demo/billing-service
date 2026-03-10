@@ -2,6 +2,7 @@ package store
 
 import (
 	"sync"
+	"time"
 
 	"github.com/helix-acme-corp-demo/billing-service/internal/domain"
 )
@@ -12,6 +13,7 @@ type Store struct {
 	subscriptions map[string]*domain.Subscription
 	usageRecords  map[string]*domain.UsageRecord
 	invoices      map[string]*domain.Invoice
+	revokedJTIs   map[string]time.Time
 }
 
 // New creates a new empty Store.
@@ -20,6 +22,7 @@ func New() *Store {
 		subscriptions: make(map[string]*domain.Subscription),
 		usageRecords:  make(map[string]*domain.UsageRecord),
 		invoices:      make(map[string]*domain.Invoice),
+		revokedJTIs:   make(map[string]time.Time),
 	}
 }
 
@@ -108,4 +111,28 @@ func (s *Store) InvoicesBySubscription(subID string) []*domain.Invoice {
 		}
 	}
 	return result
+}
+
+// RevokeToken adds a JTI to the revocation list with its expiry time.
+func (s *Store) RevokeToken(jti string, expiry time.Time) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.revokedJTIs[jti] = expiry
+}
+
+// IsRevoked reports whether the given JTI has been revoked.
+// Entries whose stored expiry has already passed are lazily pruned.
+func (s *Store) IsRevoked(jti string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	expiry, ok := s.revokedJTIs[jti]
+	if !ok {
+		return false
+	}
+	if time.Now().After(expiry) {
+		// Lazily prune: the token would be invalid by expiry anyway.
+		delete(s.revokedJTIs, jti)
+		return false
+	}
+	return true
 }

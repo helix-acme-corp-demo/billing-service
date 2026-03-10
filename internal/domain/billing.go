@@ -1,6 +1,10 @@
 package domain
 
-import "time"
+import (
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+)
 
 // Subscription represents a user's subscription to a billing plan.
 type Subscription struct {
@@ -48,4 +52,27 @@ type RecordUsageRequest struct {
 // GenerateInvoiceRequest is the payload for generating an invoice.
 type GenerateInvoiceRequest struct {
 	SubscriptionID string `json:"subscription_id"`
+}
+
+// TokenClaims holds the JWT claims used throughout the service.
+type TokenClaims struct {
+	jwt.RegisteredClaims
+	Scopes []string `json:"scopes"`
+	Type   string   `json:"type"` // "access" or "refresh"
+}
+
+// RefreshRequest is the payload for the token refresh endpoint.
+type RefreshRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
+// RevokeRequest is the payload for the token revocation endpoint.
+type RevokeRequest struct {
+	Token string `json:"token"`
+}
+
+// TokenPair is returned by the refresh endpoint.
+type TokenPair struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
 }
