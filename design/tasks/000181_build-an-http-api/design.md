@@ -102,3 +102,33 @@ The `authtokens.Middleware` already writes a JSON `{"error": "<message>"}` with 
 - Existing handler logic in `subscription.go`, `usage.go`, `invoice.go`.
 - The `store` package.
 - `GET /health` remains public.
+
+## Implementation Notes
+
+### Dependency
+- Added `github.com/helix-acme-corp-demo/authtokens v0.0.0-20260310093228-0c247af2286c` via `go get` — no vendoring issues.
+
+### Files Changed / Created
+| File | Action | Notes |
+|---|---|---|
+| `config/config.go` | Modified | Added `JWTSecret`, `JWTDefaultTTL`, `RevokedTokenIDs` fields; also read `PORT` from env (was hardcoded before) |
+| `internal/auth/revocation.go` | Created | In-memory `RevocationList` with `sync.RWMutex` |
+| `internal/auth/revocation_test.go` | Created | 5 unit tests covering empty list, pre-populated, skip empty strings, `Revoke`, side-effect isolation |
+| `internal/handler/auth.go` | Created | `AuthHandler.Refresh()` — reads Bearer token directly (middleware NOT applied here — handler validates itself to return clean 401) |
+| `internal/handler/auth_test.go` | Created | 5 unit tests; needed `IssuedAt: time.Now().Add(-30*time.Minute)` to ensure refreshed token has a different `iat` |
+| `cmd/server/main.go` | Modified | Wired issuer + 3 validators + route groups |
+| `cmd/server/main_test.go` | Created | Integration smoke tests using `buildTestRouter` helper |
+
+### Gotcha: Token Refresh Produces Identical Raw Token in Same Second
+`authtokens.Issuer.Refresh()` re-issues with `time.Now()` as the new `iat`. If the original token was also issued within the same Unix second, the payload is byte-for-byte identical and so is the HMAC — meaning `refreshed.Raw == original.Raw`. Fixed in tests by issuing the original with `IssuedAt: time.Now().Add(-30*time.Minute)`.
+
+### Gotcha: `/auth/refresh` Does Its Own Bearer Extraction
+The refresh handler is placed in a chi group protected by `authtokens.Middleware(baseValidator)`, which already validates and rejects missing/invalid tokens with 401 before the handler is reached. The handler then calls `issuer.Refresh(raw, validator)` using the raw string extracted from the header again (same token the middleware already validated). This is intentional: the middleware puts `Claims` in context but not the raw string, so the handler must re-extract it.
+
+### Scope Enforcement Pattern
+Three separate `authtokens.Validator` instances are constructed with identical options except for `WithRequiredScopes`. They are each applied to a distinct `r.Group(...)`. This avoids a single global middleware that would block the `/auth/refresh` route from tokens lacking billing scopes.
+
+### Config Defaults
+- `JWT_DEFAULT_TTL` defaults to `1h` if unset or unparseable.
+- `PORT` defaults to `8082` (preserving the original hardcoded value).
+- `JWT_SECRET` has no default — an empty secret is a valid (insecure) HMAC key; callers should always set this in production.
