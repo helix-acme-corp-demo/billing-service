@@ -117,8 +117,22 @@ Three new fields in `config.Config`:
 
 ### Error Responses
 
-All errors go through `envelope.Write`. Add `envelope.Unauthorized(code, message string)` and `envelope.Forbidden(code, message string)` following the same pattern as the existing `envelope.BadRequest` and `envelope.NotFound`.
+All errors go through `envelope.Write`. The `envelope` package already ships `Unauthorized(message string)` and `Forbidden(message string)` — but they hard-code the `Error.Code` field to `"unauthorized"` and `"forbidden"` respectively, with no way to pass a custom code. Because we need distinct codes (`token_expired`, `token_revoked`, `invalid_token`, `insufficient_scope`), the middleware builds `envelope.Response` values directly instead of calling those helpers:
 
+```billing-service/internal/middleware/auth.go
+func tokenError(status int, code, message string) envelope.Response {
+    return envelope.Response{
+        Status: status,
+        OK:     false,
+        Error:  &envelope.ErrorDetail{Code: code, Message: message},
+    }
+}
+```
+
+No changes to the `envelope` package are needed. The Envelope Helpers tasks in tasks.md are removed.
+
+| Condition | Status | Code |
+|-----------|--------|------|
 | Condition | Status | Code |
 |-----------|--------|------|
 | Missing / malformed token | 401 | `invalid_token` |
