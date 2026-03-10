@@ -1,12 +1,12 @@
 # Implementation Tasks
 
 ## Config
-- [ ] Add `JWTSecret`, `JWTDefaultTTL`, and `RevokedTokenIDs` fields to `config/config.go`, reading from `JWT_SECRET`, `JWT_DEFAULT_TTL`, and `REVOKED_TOKEN_IDS` env vars
+- [~] Add `JWTSecret`, `JWTDefaultTTL`, and `RevokedTokenIDs` fields to `config/config.go`, reading from `JWT_SECRET`, `JWT_DEFAULT_TTL`, and `REVOKED_TOKEN_IDS` env vars
 
 ## Revocation List
-- [ ] Create `internal/auth/revocation.go` with an in-memory `RevocationList` struct implementing `authtokens.RevocationChecker`
-- [ ] Add `IsRevoked(id string) bool` and `Revoke(id string)` methods protected by `sync.RWMutex`
-- [ ] Add `NewRevocationList(ids []string) *RevocationList` constructor that pre-populates from a string slice
+- [~] Create `internal/auth/revocation.go` with an in-memory `RevocationList` struct implementing `authtokens.RevocationChecker`
+- [~] Add `IsRevoked(id string) bool` and `Revoke(id string)` methods protected by `sync.RWMutex`
+- [~] Add `NewRevocationList(ids []string) *RevocationList` constructor that pre-populates from a string slice
 
 ## Auth Handler
 - [ ] Create `internal/handler/auth.go` with `AuthHandler` struct holding `issuer authtokens.Issuer`, `validator authtokens.Validator`, and `logger logpipe.Logger`
