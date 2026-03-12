@@ -15,22 +15,25 @@ import (
 	"github.com/helix-acme-corp-demo/logpipe"
 
 	"github.com/helix-acme-corp-demo/billing-service/internal/domain"
+	"github.com/helix-acme-corp-demo/billing-service/internal/provider"
 	"github.com/helix-acme-corp-demo/billing-service/internal/store"
 )
 
 // SubscriptionHandler handles subscription-related HTTP requests.
 type SubscriptionHandler struct {
-	store  *store.Store
-	cache  cachex.Cache
-	logger logpipe.Logger
+	store    *store.Store
+	provider provider.PaymentProvider
+	cache    cachex.Cache
+	logger   logpipe.Logger
 }
 
 // NewSubscription creates a new SubscriptionHandler.
-func NewSubscription(s *store.Store, c cachex.Cache, l logpipe.Logger) *SubscriptionHandler {
+func NewSubscription(s *store.Store, p provider.PaymentProvider, c cachex.Cache, l logpipe.Logger) *SubscriptionHandler {
 	return &SubscriptionHandler{
-		store:  s,
-		cache:  c,
-		logger: l,
+		store:    s,
+		provider: p,
+		cache:    c,
+		logger:   l,
 	}
 }
 
@@ -56,6 +59,36 @@ func (h *SubscriptionHandler) Create() http.HandlerFunc {
 			Status:    "active",
 			CreatedAt: now,
 			ExpiresAt: now.Add(30 * 24 * time.Hour),
+		}
+
+		// Best-effort: create a customer on the payment provider.
+		custResult, err := h.provider.CreateCustomer(r.Context(), provider.CreateCustomerRequest{
+			UserID: req.UserID,
+		})
+		if err != nil {
+			h.logger.Error("payment provider CreateCustomer failed",
+				logpipe.String("user_id", req.UserID),
+				logpipe.String("error", err.Error()),
+			)
+			// Non-blocking — continue with subscription creation.
+		} else {
+			sub.ProviderCustomerID = custResult.ProviderID
+		}
+
+		// Best-effort: create the subscription on the payment provider.
+		if sub.ProviderCustomerID != "" {
+			provSub, err := h.provider.CreateSubscription(r.Context(), provider.CreateSubscriptionRequest{
+				CustomerID: sub.ProviderCustomerID,
+				Plan:       req.Plan,
+			})
+			if err != nil {
+				h.logger.Error("payment provider CreateSubscription failed",
+					logpipe.String("subscription_id", sub.ID),
+					logpipe.String("error", err.Error()),
+				)
+			} else {
+				sub.ProviderSubscriptionID = provSub.ProviderID
+			}
 		}
 
 		h.store.SaveSubscription(sub)
@@ -116,6 +149,18 @@ func (h *SubscriptionHandler) Cancel() http.HandlerFunc {
 		if !ok {
 			envelope.Write(w, envelope.NotFound("subscription not found"))
 			return
+		}
+
+		// Best-effort: cancel the subscription on the payment provider.
+		if sub.ProviderSubscriptionID != "" {
+			if err := h.provider.CancelSubscription(r.Context(), sub.ProviderSubscriptionID); err != nil {
+				h.logger.Error("payment provider CancelSubscription failed",
+					logpipe.String("subscription_id", sub.ID),
+					logpipe.String("provider_subscription_id", sub.ProviderSubscriptionID),
+					logpipe.String("error", err.Error()),
+				)
+				// Non-blocking — continue with local cancellation.
+			}
 		}
 
 		sub.Status = "canceled"

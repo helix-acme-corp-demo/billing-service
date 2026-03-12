@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 
 	"github.com/helix-acme-corp-demo/billing-service/config"
 	"github.com/helix-acme-corp-demo/billing-service/internal/handler"
+	"github.com/helix-acme-corp-demo/billing-service/internal/provider"
 	"github.com/helix-acme-corp-demo/billing-service/internal/store"
 )
 
@@ -21,15 +23,22 @@ func main() {
 	cfg := config.Load()
 	logger := logpipe.New()
 
+	// Resolve the configured payment provider.
+	pp, err := provider.NewFromConfig(cfg.PaymentProvider, cfg.ProviderConfig)
+	if err != nil {
+		log.Fatalf("failed to initialize payment provider %q: %v", cfg.PaymentProvider, err)
+	}
+	logger.Info("payment provider initialized", logpipe.String("provider", cfg.PaymentProvider))
+
 	cache := cachex.Memory(
 		cachex.WithDefaultTTL(5*time.Minute),
 		cachex.WithMaxSize(1000),
 	)
 
 	billingStore := store.New()
-	subHandler := handler.NewSubscription(billingStore, cache, logger)
+	subHandler := handler.NewSubscription(billingStore, pp, cache, logger)
 	usageHandler := handler.NewUsage(billingStore, logger)
-	invoiceHandler := handler.NewInvoice(billingStore, logger)
+	invoiceHandler := handler.NewInvoice(billingStore, pp, logger)
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)

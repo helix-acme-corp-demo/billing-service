@@ -67,6 +67,42 @@ curl http://localhost:8082/invoices?subscription_id=sub-123
 | Pro | $49.99/mo | 50,000/mo | 50 GB |
 | Enterprise | $199.99/mo | Unlimited | 500 GB |
 
+## Payment Providers
+
+The billing service uses a pluggable payment provider abstraction. You can switch providers via the `PAYMENT_PROVIDER` environment variable.
+
+### Available Providers
+
+| Provider | Value | Description |
+|----------|-------|-------------|
+| Stub | `stub` (default) | No-op provider for development and testing. Returns fake IDs and always succeeds. |
+| Stripe | `stripe` | Stripe integration (skeleton — requires implementation of SDK calls). |
+
+### Configuration
+
+```bash
+# Use the stub provider (default — no config needed)
+PAYMENT_PROVIDER=stub go run ./cmd/server
+
+# Use Stripe (requires API key)
+PAYMENT_PROVIDER=stripe STRIPE_API_KEY=sk_test_... go run ./cmd/server
+```
+
+### Adding a New Provider
+
+1. Create a new file in `internal/provider/` (e.g., `braintree.go`).
+2. Implement the `provider.PaymentProvider` interface.
+3. Register it in an `init()` function:
+   ```go
+   func init() {
+       Register("braintree", func(cfg map[string]string) (PaymentProvider, error) {
+           return NewBraintree(cfg["merchant_id"], cfg["api_key"])
+       })
+   }
+   ```
+4. Add any required environment variables to `config/config.go` in the `Load()` function.
+5. Set `PAYMENT_PROVIDER=braintree` to activate it.
+
 ## Running
 
 ```bash
