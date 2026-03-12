@@ -43,24 +43,14 @@ type Config struct {
 - Import `authtokens`.
 - Validate that `cfg.AuthSecret` is non-empty; `log.Fatal` if missing.
 - Create a `Validator` with `authtokens.NewValidator(authtokens.WithSecret(...), authtokens.WithAudience(...))`.
-- Use `r.Group()` to apply `authtokens.Middleware(validator)` to all business routes, keeping `/health` outside the group.
+- Use `r.Group()` to apply `authtokens.Middleware(validator)` to all business routes. `/health` stays on the top-level router, unauthenticated. Move the existing route registrations (unchanged) into the group.
 
-Resulting route structure:
 ```
-r.Get("/health", handler.Health())       // unauthenticated
+r.Get("/health", handler.Health())          // unauthenticated
 
 r.Group(func(r chi.Router) {
     r.Use(authtokens.Middleware(validator))
-
-    r.Post("/subscriptions", ...)
-    r.Get("/subscriptions", ...)
-    r.Get("/subscriptions/{id}", ...)
-    r.Post("/subscriptions/{id}/cancel", ...)
-    r.Post("/usage", ...)
-    r.Get("/usage", ...)
-    r.Post("/invoices/generate", ...)
-    r.Get("/invoices/{id}", ...)
-    r.Get("/invoices", ...)
+    // all existing /subscriptions, /usage, /invoices routes go here unchanged
 })
 ```
 
