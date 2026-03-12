@@ -9,6 +9,6 @@
 - [x] Refactor `InvoiceHandler` to accept a `PaymentProvider` interface and call `Charge` when generating/finalizing an invoice instead of only saving locally
 - [x] Refactor `SubscriptionHandler` to accept a `PaymentProvider` interface and call `CreateSubscription`/`CancelSubscription` on create/cancel flows
 - [x] Wire the provider into `cmd/server/main.go` — use the registry to resolve the configured provider and inject it into handlers
-- [~] Add unit tests for `StubProvider` to verify it satisfies the `PaymentProvider` interface and returns expected results
-- [~] Add unit tests for the registry to verify correct provider resolution and error on unknown provider name
-- [ ] Update `README.md` with instructions on selecting and configuring a payment provider
+- [x] Add unit tests for `StubProvider` to verify it satisfies the `PaymentProvider` interface and returns expected results
+- [x] Add unit tests for the registry to verify correct provider resolution and error on unknown provider name
+- [x] Update `README.md` with instructions on selecting and configuring a payment provider
