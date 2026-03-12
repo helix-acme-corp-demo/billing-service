@@ -11,6 +11,7 @@ import (
 	"github.com/helix-acme-corp-demo/logpipe"
 
 	"github.com/helix-acme-corp-demo/billing-service/internal/domain"
+	"github.com/helix-acme-corp-demo/billing-service/internal/provider"
 	"github.com/helix-acme-corp-demo/billing-service/internal/store"
 )
 
@@ -30,15 +31,17 @@ var usageCosts = map[string]int64{
 
 // InvoiceHandler handles invoice-related HTTP requests.
 type InvoiceHandler struct {
-	store  *store.Store
-	logger logpipe.Logger
+	store    *store.Store
+	provider provider.PaymentProvider
+	logger   logpipe.Logger
 }
 
 // NewInvoice creates a new InvoiceHandler.
-func NewInvoice(s *store.Store, l logpipe.Logger) *InvoiceHandler {
+func NewInvoice(s *store.Store, p provider.PaymentProvider, l logpipe.Logger) *InvoiceHandler {
 	return &InvoiceHandler{
-		store:  s,
-		logger: l,
+		store:    s,
+		provider: p,
+		logger:   l,
 	}
 }
 
@@ -78,19 +81,42 @@ func (h *InvoiceHandler) Generate() http.HandlerFunc {
 			}
 		}
 
+		totalAmount := basePrice + usageTotal
+
 		invoice := &domain.Invoice{
 			ID:             generateUUID(),
 			SubscriptionID: req.SubscriptionID,
-			Amount:         basePrice + usageTotal,
+			Amount:         totalAmount,
 			Currency:       "usd",
 			Status:         "draft",
 			IssuedAt:       time.Now().UTC(),
+		}
+
+		// Attempt to charge via the payment provider.
+		if totalAmount > 0 {
+			chargeResult, err := h.provider.Charge(r.Context(), provider.ChargeRequest{
+				CustomerID: sub.ProviderCustomerID,
+				Amount:     totalAmount,
+				Currency:   "usd",
+				InvoiceID:  invoice.ID,
+			})
+			if err != nil {
+				h.logger.Error("payment provider charge failed",
+					logpipe.String("invoice_id", invoice.ID),
+					logpipe.String("error", err.Error()),
+				)
+				// Still save the invoice as draft so it can be retried.
+			} else {
+				invoice.ProviderChargeID = chargeResult.ChargeID
+				invoice.Status = chargeResult.Status
+			}
 		}
 
 		h.store.SaveInvoice(invoice)
 		h.logger.Info("invoice generated",
 			logpipe.String("invoice_id", invoice.ID),
 			logpipe.String("subscription_id", invoice.SubscriptionID),
+			logpipe.String("status", invoice.Status),
 		)
 
 		envelope.Write(w, envelope.Created(invoice))
