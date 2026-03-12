@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	"github.com/helix-acme-corp-demo/authtokens"
 	"github.com/helix-acme-corp-demo/cachex"
 	"github.com/helix-acme-corp-demo/logpipe"
 	_ "github.com/helix-acme-corp-demo/retryx"
@@ -30,6 +31,18 @@ func main() {
 	}
 	logger.Info("payment provider initialized", logpipe.String("provider", cfg.PaymentProvider))
 
+	if cfg.AuthSecret == "" {
+		log.Fatal("AUTH_SECRET environment variable is required")
+	}
+
+	validatorOpts := []authtokens.Option{
+		authtokens.WithSecret([]byte(cfg.AuthSecret)),
+	}
+	if cfg.AuthAudience != "" {
+		validatorOpts = append(validatorOpts, authtokens.WithAudience(cfg.AuthAudience))
+	}
+	validator := authtokens.NewValidator(validatorOpts...)
+
 	cache := cachex.Memory(
 		cachex.WithDefaultTTL(5*time.Minute),
 		cachex.WithMaxSize(1000),
@@ -47,17 +60,21 @@ func main() {
 
 	r.Get("/health", handler.Health())
 
-	r.Post("/subscriptions", subHandler.Create())
-	r.Get("/subscriptions", subHandler.List())
-	r.Get("/subscriptions/{id}", subHandler.Get())
-	r.Post("/subscriptions/{id}/cancel", subHandler.Cancel())
+	r.Group(func(r chi.Router) {
+		r.Use(authtokens.Middleware(validator))
 
-	r.Post("/usage", usageHandler.Record())
-	r.Get("/usage", usageHandler.List())
+		r.Post("/subscriptions", subHandler.Create())
+		r.Get("/subscriptions", subHandler.List())
+		r.Get("/subscriptions/{id}", subHandler.Get())
+		r.Post("/subscriptions/{id}/cancel", subHandler.Cancel())
 
-	r.Post("/invoices/generate", invoiceHandler.Generate())
-	r.Get("/invoices/{id}", invoiceHandler.Get())
-	r.Get("/invoices", invoiceHandler.List())
+		r.Post("/usage", usageHandler.Record())
+		r.Get("/usage", usageHandler.List())
+
+		r.Post("/invoices/generate", invoiceHandler.Generate())
+		r.Get("/invoices/{id}", invoiceHandler.Get())
+		r.Get("/invoices", invoiceHandler.List())
+	})
 
 	logger.Info("starting billing-service", logpipe.String("port", cfg.Port))
 	http.ListenAndServe(fmt.Sprintf(":%s", cfg.Port), r)
