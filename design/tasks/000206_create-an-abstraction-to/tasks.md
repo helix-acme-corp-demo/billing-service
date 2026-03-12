@@ -1,7 +1,7 @@
 # Implementation Tasks
 
-- [ ] Define `PaymentProvider` interface in `internal/provider/provider.go` with methods: `CreateCustomer`, `Charge`, `Refund`, `CreateSubscription`, `CancelSubscription`, and `GetPaymentStatus`
-- [ ] Define provider-related domain types in `internal/domain/payment.go` (`PaymentRequest`, `PaymentResult`, `CustomerInfo`, `ProviderSubscription`, etc.)
+- [~] Define `PaymentProvider` interface in `internal/provider/provider.go` with methods: `CreateCustomer`, `Charge`, `Refund`, `CreateSubscription`, `CancelSubscription`, and `GetPaymentStatus`
+- [~] Define provider-related domain types in `internal/domain/payment.go` (`PaymentRequest`, `PaymentResult`, `CustomerInfo`, `ProviderSubscription`, etc.)
 - [ ] Implement a `StubProvider` in `internal/provider/stub.go` that satisfies the interface with in-memory/no-op behavior (useful for tests and local dev)
 - [ ] Implement a `StripeProvider` in `internal/provider/stripe.go` as the first real provider example (can be a skeleton with TODOs for actual Stripe SDK calls)
 - [ ] Create a provider registry/factory in `internal/provider/registry.go` that maps a provider name (from config) to its constructor
