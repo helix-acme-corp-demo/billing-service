@@ -1,5 +1,7 @@
 github.com/go-chi/chi/v5 v5.2.1 h1:KOIHODQj58PmL80G2Eak4WdvUzjSJSm0vG72crDCqb8=
 github.com/go-chi/chi/v5 v5.2.1/go.mod h1:L2yAIGWB3H+phAw1NxKwWM+7eUH/lU8pOMm5hHcoops=
+github.com/helix-acme-corp-demo/authtokens v0.0.0-20260310093228-0c247af2286c h1:XNceIW6L5xPains79vfzfK/+uCVp9wjP24xXhfj7b3w=
+github.com/helix-acme-corp-demo/authtokens v0.0.0-20260310093228-0c247af2286c/go.mod h1:yeii/7AWwtiiuiIXvEn4o/QLa5Z6cwshn/EGfM1I1oQ=
 github.com/helix-acme-corp-demo/cachex v0.0.0-20260303102801-e6166ef0cfd6 h1:tWkvbouD4JBrZ8kfeYcR0AHmpS7Ocd6YisnPpcVxOmg=
 github.com/helix-acme-corp-demo/cachex v0.0.0-20260303102801-e6166ef0cfd6/go.mod h1:9IjhlQ/bOWLXmixwgqldW30XTMJnQv2EBqjCufUXXKU=
 github.com/helix-acme-corp-demo/envelope v0.0.0-20260303102813-b2a1edadc29e h1:J4g1qNkKINFD1T2fh6T1J06tYb6IMz9X4ZHMDn/lFb0=

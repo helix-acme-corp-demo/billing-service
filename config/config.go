@@ -7,6 +7,8 @@ type Config struct {
 	Port            string
 	PaymentProvider string
 	ProviderConfig  map[string]string
+	AuthSecret      string
+	AuthAudience    string
 }
 
 // Load returns the application configuration.
@@ -32,5 +34,7 @@ func Load() Config {
 		Port:            port,
 		PaymentProvider: provider,
 		ProviderConfig:  providerCfg,
+		AuthSecret:      os.Getenv("AUTH_SECRET"),
+		AuthAudience:    os.Getenv("AUTH_AUDIENCE"),
 	}
 }
