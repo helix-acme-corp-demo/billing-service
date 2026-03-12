@@ -1,6 +1,6 @@
 # Implementation Tasks
 
-- [ ] Add `github.com/helix-acme-corp-demo/authtokens` dependency to `billing-service/go.mod` (`go get github.com/helix-acme-corp-demo/authtokens`)
+- [~] Add `github.com/helix-acme-corp-demo/authtokens` dependency to `billing-service/go.mod` (`go get github.com/helix-acme-corp-demo/authtokens`)
 - [ ] Update `billing-service/config/config.go`: add `AuthSecret` and `AuthAudience` fields to `Config` struct, read from `AUTH_SECRET` and `AUTH_AUDIENCE` environment variables in `Load()`
 - [ ] Update `billing-service/cmd/server/main.go`: fail fast with `log.Fatal` if `cfg.AuthSecret` is empty
 - [ ] Update `billing-service/cmd/server/main.go`: create an `authtokens.Validator` using `authtokens.NewValidator(authtokens.WithSecret(...))` and optionally `authtokens.WithAudience(...)` if configured
